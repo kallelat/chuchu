@@ -12,6 +12,7 @@ type TimeTableRowModel struct {
 	ScheduledTime       string `json:"scheduledTime"`
 	ActualTime          string `json:"actualTime"`
 	DifferenceInMinutes int    `json:"differenceInMinutes"`
+	TrainStopping       bool   `json:"trainStopping"`
 }
 
 func (ttr TimeTableRowModel) print() {
@@ -22,4 +23,12 @@ func (ttr TimeTableRowModel) print() {
 func (ttr TimeTableRowModel) getStationName() string {
 	station := getStationByShortCode(ttr.StationShortCode)
 	return station.StationName
+}
+
+func (ttr TimeTableRowModel) isStopping() bool {
+	return ttr.TrainStopping
+}
+
+func (ttr TimeTableRowModel) isArrival() bool {
+	return ttr.Type == "ARRIVAL"
 }

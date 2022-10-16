@@ -89,7 +89,7 @@ func (t TrainModel) printName() {
 
 func (t TrainModel) printTimeTableRows() {
 	for _, ttr := range t.TimeTableRows {
-		if ttr.Type == "ARRIVAL" {
+		if ttr.isStopping() && ttr.isArrival() {
 			ttr.print()
 		}
 	}
