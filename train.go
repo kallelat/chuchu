@@ -55,7 +55,6 @@ func getTrain(trainNumber int) TrainModel {
 func getAllTrains() []TrainModel {
 	// fetch train info from API
 	url := fmt.Sprintf("%s/%s/%s", apiUrl, "trains", getTimestamp())
-	fmt.Println(url)
 	res, getError := http.Get(url)
 
 	// if fetching fails...

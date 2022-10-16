@@ -15,6 +15,11 @@ type TimeTableRowModel struct {
 }
 
 func (ttr TimeTableRowModel) print() {
-	output := fmt.Sprintf(" ==> %s, arrival at %s, delay (%s minutes delayed)", ttr.StationShortCode, ttr.ScheduledTime, strconv.Itoa(ttr.DifferenceInMinutes))
+	output := fmt.Sprintf(" ==> %s, arrival at %s, delay (%s minutes delayed)", ttr.getStationName(), ttr.ScheduledTime, strconv.Itoa(ttr.DifferenceInMinutes))
 	fmt.Println(output)
+}
+
+func (ttr TimeTableRowModel) getStationName() string {
+	station := getStationByShortCode(ttr.StationShortCode)
+	return station.StationName
 }
