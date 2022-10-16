@@ -90,6 +90,8 @@ func (t TrainModel) printName() {
 func (t TrainModel) printTimeTableRows() {
 	for _, ttr := range t.TimeTableRows {
 		if ttr.isStopping() && ttr.isArrival() {
+			// print row only, if the train stops at this station
+			// only only print ARRIVALs, otherwise there would be several entries per station
 			ttr.print()
 		}
 	}
