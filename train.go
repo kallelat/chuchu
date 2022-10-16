@@ -84,7 +84,7 @@ func getAllTrains() []TrainModel {
 }
 
 func (t TrainModel) printName() {
-	fmt.Printf("Tran %s (%s)\n", strconv.Itoa(t.TrainNumber), t.TrainType)
+	fmt.Printf("Train %s (%s)\n", strconv.Itoa(t.TrainNumber), t.TrainType)
 }
 
 func (t TrainModel) printTimeTableRows() {

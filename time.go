@@ -22,5 +22,5 @@ func parseToTime(value string) time.Time {
 		fmt.Println("Can't parse date")
 		os.Exit(1)
 	}
-	return time
+	return time.Local()
 }

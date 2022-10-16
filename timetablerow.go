@@ -16,7 +16,7 @@ type TimeTableRowModel struct {
 }
 
 func (ttr TimeTableRowModel) print() {
-	scheduledTime := parseToTime(ttr.ScheduledTime).Format("03:04")
+	scheduledTime := parseToTime(ttr.ScheduledTime).Format("15:04")
 	output := fmt.Sprintf(" ==> %s, arrival at %s", ttr.getStationName(), scheduledTime)
 	if ttr.DifferenceInMinutes > 0 {
 		output += red(fmt.Sprintf(" delayed %s minutes", strconv.Itoa(ttr.DifferenceInMinutes)))
