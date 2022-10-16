@@ -19,9 +19,10 @@ type TrainModel struct {
 }
 
 func getTrain(trainNumber int) TrainModel {
+	trainNumberAsString := strconv.Itoa(trainNumber)
 
 	// fetch train info from API
-	url := fmt.Sprintf("%s/%s/%s/%s", apiUrl, "trains", getTimestamp(), strconv.Itoa(trainNumber))
+	url := fmt.Sprintf("%s/%s/%s/%s", apiUrl, "trains", getTimestamp(), trainNumberAsString)
 	res, getError := http.Get(url)
 
 	// if fetching fails...
@@ -36,6 +37,9 @@ func getTrain(trainNumber int) TrainModel {
 		fmt.Println("Could not read train info.")
 		os.Exit(1)
 	}
+
+	// write to file
+	writeJsonToFile(fmt.Sprintf("%s.json", trainNumberAsString), string(body))
 
 	// as data is returned as an array with one entry, Unmarshal and return the first entry
 	var trains []TrainModel
@@ -65,6 +69,9 @@ func getAllTrains() []TrainModel {
 		fmt.Println("Could not read trains list.")
 		os.Exit(1)
 	}
+
+	// write to file
+	writeJsonToFile("all.json", string(body))
 
 	// as data is returned as an array with one entry, Unmarshal and return the first entry
 	var trains []TrainModel
