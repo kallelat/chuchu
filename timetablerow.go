@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 type TimeTableRowModel struct {
 	Type                string `json:"type"`
@@ -12,5 +15,6 @@ type TimeTableRowModel struct {
 }
 
 func (ttr TimeTableRowModel) print() {
-	fmt.Println("  @"+ttr.StationShortCode+":", ttr.DifferenceInMinutes, "delayed")
+	output := fmt.Sprintf(" ==> %s, arrival at %s, delay (%s minutes delayed)", ttr.StationShortCode, ttr.ScheduledTime, strconv.Itoa(ttr.DifferenceInMinutes))
+	fmt.Println(output)
 }

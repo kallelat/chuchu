@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"os"
 )
 
 func main() {
@@ -13,7 +15,16 @@ func main() {
 
 	if *trainNumberAttribute != 0 {
 		train := getTrain(*trainNumberAttribute)
-		train.print()
+		train.printName()
+
+		// if cancelled, print status and exit
+		if train.isCancelled() {
+			fmt.Println("TRAIN IS CANCELLED!")
+			os.Exit(0)
+		}
+
+		// if not cancelled, print train timetablerows
+		train.printTimeTableRows()
 	}
 
 	if *allTrainsAttribute {

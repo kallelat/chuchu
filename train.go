@@ -16,6 +16,7 @@ type TrainModel struct {
 	TrainType     string              `json:"trainType"`
 	Version       int                 `json:"version"`
 	TimeTableRows []TimeTableRowModel `json:"timeTableRows"`
+	Cancelled     bool                `json:"cancelled"`
 }
 
 func getTrain(trainNumber int) TrainModel {
@@ -89,11 +90,17 @@ func (t TrainModel) printName() {
 
 func (t TrainModel) printTimeTableRows() {
 	for _, ttr := range t.TimeTableRows {
-		ttr.print()
+		if ttr.Type == "ARRIVAL" {
+			ttr.print()
+		}
 	}
 }
 
 func (t TrainModel) print() {
 	t.printName()
 	t.printTimeTableRows()
+}
+
+func (t TrainModel) isCancelled() bool {
+	return t.Cancelled
 }
