@@ -8,14 +8,15 @@ import (
 
 func main() {
 	// pick the args, later provide support for other attributes as well
-	trainNumberAttribute := flag.Int("train", 0, "train number as integer")
-	allTrainsAttribute := flag.Bool("all", false, "lists all trains currently available")
+	trainNumberAttribute := flag.Int("train", 0, "train number as integer, usage: -train <trainNumber>")
+	allTrainsAttribute := flag.Bool("all", false, "lists all trains currently available, usage: -all")
+	stationAttribute := flag.String("station", "", "list trains today by station, usage -station <stationShortCode>")
 
 	flag.Parse()
 
 	if *trainNumberAttribute != 0 {
 		train := getTrain(*trainNumberAttribute)
-		train.printName()
+		train.printHeader()
 
 		// if cancelled, print status and exit
 		if train.isCancelled() {
@@ -30,8 +31,15 @@ func main() {
 	if *allTrainsAttribute {
 		trains := getAllTrains()
 		for _, train := range trains {
-			train.printName()
+			train.printHeader()
 		}
-
 	}
+
+	if *stationAttribute != "" {
+		trains := getTrainsByStation(*stationAttribute)
+		for _, train := range trains {
+			train.printScheduleEntry(*stationAttribute)
+		}
+	}
+
 }

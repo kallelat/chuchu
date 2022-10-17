@@ -6,102 +6,152 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 )
 
 const apiUrl = "https://rata.digitraffic.fi/api/v1"
 
 type TrainModel struct {
-	TrainNumber   int                 `json:"trainNumber"`
-	TrainType     string              `json:"trainType"`
-	Version       int                 `json:"version"`
-	TimeTableRows []TimeTableRowModel `json:"timeTableRows"`
-	Cancelled     bool                `json:"cancelled"`
+	TrainNumber    int                 `json:"trainNumber"`
+	TrainType      string              `json:"trainType"`
+	CommuterLineID string              `json:"commuterLineID"`
+	Version        int                 `json:"version"`
+	TimeTableRows  []TimeTableRowModel `json:"timeTableRows"`
+	Cancelled      bool                `json:"cancelled"`
 }
 
-func getTrain(trainNumber int) TrainModel {
-	trainNumberAsString := strconv.Itoa(trainNumber)
-
-	// fetch train info from API
-	url := fmt.Sprintf("%s/%s/%s/%s", apiUrl, "trains", getTimestamp(), trainNumberAsString)
+// a generic wrapper implementing request to train api
+func trainApi(path string, logfile string) []TrainModel {
+	url := fmt.Sprintf("%s/%s", apiUrl, path)
 	res, getError := http.Get(url)
 
 	// if fetching fails...
 	if getError != nil {
-		fmt.Println("Could not fetch train info.")
+		fmt.Println("Request " + path + " failed.")
 		os.Exit(1)
 	}
 
 	// read all the data sent to byte array and handle error case
 	body, readError := io.ReadAll(res.Body)
 	if readError != nil {
-		fmt.Println("Could not read train info.")
+		fmt.Println("Failed to receive proper data from " + path)
 		os.Exit(1)
 	}
 
 	// write to file
-	writeJsonToFile(fmt.Sprintf("%s.json", trainNumberAsString), string(body))
+	writeJsonToFile(logfile, string(body))
 
-	// as data is returned as an array with one entry, Unmarshal and return the first entry
+	// unmarshal and return the whole array
 	var trains []TrainModel
 	jsonError := json.Unmarshal(body, &trains)
 	if jsonError != nil {
-		fmt.Println("Could not parse train info.")
-		os.Exit(1)
-	}
-	return trains[0]
-}
-
-func getAllTrains() []TrainModel {
-	// fetch train info from API
-	url := fmt.Sprintf("%s/%s/%s", apiUrl, "trains", getTimestamp())
-	res, getError := http.Get(url)
-
-	// if fetching fails...
-	if getError != nil {
-		fmt.Println("Could not fetch trains list.")
-		os.Exit(1)
-	}
-
-	// read all the data sent to byte array and handle error case
-	body, readError := io.ReadAll(res.Body)
-	if readError != nil {
-		fmt.Println("Could not read trains list.")
-		os.Exit(1)
-	}
-
-	// write to file
-	writeJsonToFile("all.json", string(body))
-
-	// as data is returned as an array with one entry, Unmarshal and return the first entry
-	var trains []TrainModel
-	jsonError := json.Unmarshal(body, &trains)
-	if jsonError != nil {
-		fmt.Println("Could not parse trains list.")
+		fmt.Println("Could not parse " + path + " response")
 		os.Exit(1)
 	}
 	return trains
 }
 
-func (t TrainModel) printName() {
-	fmt.Printf("Train %s (%s)\n", strconv.Itoa(t.TrainNumber), t.TrainType)
+// fetch a single train info
+func getTrain(trainNumber int) TrainModel {
+	trainNumberAsString := strconv.Itoa(trainNumber)
+	path := fmt.Sprintf("%s/%s/%s", "trains", getTimestamp(), trainNumberAsString)
+	logfile := fmt.Sprintf("%s.json", trainNumberAsString)
+	trains := trainApi(path, logfile)
+	return trains[0]
+}
+
+// fetch list of all trains (today)
+func getAllTrains() []TrainModel {
+	path := fmt.Sprintf("%s/%s", "trains", getTimestamp())
+	trains := trainApi(path, "all.json")
+	return trains
+}
+
+// get all trains stopping station (today, not yet stopped)
+func getTrainsByStation(stationShortCode string) []TrainModel {
+	path := fmt.Sprintf("live-trains/station/%s?include_nonstopping=false&departing_trains=10", stationShortCode)
+	logfile := fmt.Sprintf("%s.json", stationShortCode)
+	trains := trainApi(path, logfile)
+
+	// sort by ScheduledTime
+	sort.SliceStable(trains, func(a, b int) bool {
+		trainA := trains[a]
+		trainB := trains[b]
+
+		entryA := trainA.getStationEntry(stationShortCode)
+		entryB := trainB.getStationEntry(stationShortCode)
+
+		timeA := parseToTime(entryA.ScheduledTime)
+		timeB := parseToTime(entryB.ScheduledTime)
+
+		return timeA.Before(timeB)
+	})
+	return trains
 }
 
 func (t TrainModel) printTimeTableRows() {
-	for _, ttr := range t.TimeTableRows {
-		if ttr.isStopping() && ttr.isArrival() {
-			// print row only, if the train stops at this station
-			// only only print ARRIVALs, otherwise there would be several entries per station
-			ttr.print()
+	for index, ttr := range t.TimeTableRows {
+		if ttr.isStopping() {
+			// print departing rows, except the final destination will be printed as well
+			isFinalDestionation := ttr.isArrival() && index == len(t.TimeTableRows)-1
+			if ttr.isDeparture() || isFinalDestionation {
+				ttr.print()
+			}
 		}
 	}
 }
 
-func (t TrainModel) print() {
-	t.printName()
-	t.printTimeTableRows()
-}
-
 func (t TrainModel) isCancelled() bool {
 	return t.Cancelled
+}
+
+func (t TrainModel) printHeader() {
+	fmt.Printf("%s\n", t.getHeader())
+}
+
+func (t TrainModel) getStationEntry(stationShortCode string) TimeTableRowModel {
+	// find departure record for this station
+	for _, row := range t.TimeTableRows {
+		if row.StationShortCode == stationShortCode && row.isDeparture() {
+			return row
+		}
+	}
+	return t.TimeTableRows[0]
+}
+
+func (t TrainModel) printScheduleEntry(stationShortCode string) {
+	// get station entry
+	ttr := t.getStationEntry(stationShortCode)
+
+	// get scheduled time as string
+	departureTime := parseToTime(ttr.ScheduledTime).Format("15:04")
+
+	// define some wording based on is the train yet stopped
+	estimatedDeparture := yellow("estimated departure at")
+	if ttr.hasStopped() {
+		estimatedDeparture = green("departured at")
+	}
+
+	// print it all
+	fmt.Printf("%s to %s %s %s\n", t.getHeader(), t.getFinalDestination(), estimatedDeparture, departureTime)
+}
+
+func (t TrainModel) getHeader() string {
+	return fmt.Sprintf("%s Train %s", t.getType(), t.getNumber())
+}
+func (t TrainModel) getNumber() string {
+	return strconv.Itoa(t.TrainNumber)
+}
+
+func (t TrainModel) getType() string {
+	if t.CommuterLineID != "" {
+		return t.CommuterLineID
+	}
+	return t.TrainType
+}
+
+func (t TrainModel) getFinalDestination() string {
+	lastDestination := t.TimeTableRows[len(t.TimeTableRows)-1]
+	return lastDestination.getStationName()
 }

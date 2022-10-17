@@ -50,6 +50,10 @@ func (ttr TimeTableRowModel) isArrival() bool {
 	return ttr.Type == "ARRIVAL"
 }
 
+func (ttr TimeTableRowModel) isDeparture() bool {
+	return ttr.Type == "DEPARTURE"
+}
+
 func (ttr TimeTableRowModel) hasStopped() bool {
 	return ttr.ActualTime != ""
 }
