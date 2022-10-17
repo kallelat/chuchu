@@ -10,9 +10,15 @@ func main() {
 	// pick the args, later provide support for other attributes as well
 	trainNumberAttribute := flag.Int("train", 0, "train number as integer, usage: -train <trainNumber>")
 	allTrainsAttribute := flag.Bool("all", false, "lists all trains currently available, usage: -all")
+	watchTrainsAttribute := flag.Int("watch", 0, "watch a certain train and let user know if there are changes, usage: -watch <trainNumber>")
 	stationAttribute := flag.String("station", "", "list trains today by station, usage -station <stationShortCode>")
 
 	flag.Parse()
+
+	if *watchTrainsAttribute != 0 {
+		watch(*watchTrainsAttribute)
+		os.Exit(1)
+	}
 
 	if *trainNumberAttribute != 0 {
 		train := getTrain(*trainNumberAttribute)

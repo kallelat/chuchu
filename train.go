@@ -13,12 +13,13 @@ import (
 const apiUrl = "https://rata.digitraffic.fi/api/v1"
 
 type TrainModel struct {
-	TrainNumber    int                 `json:"trainNumber"`
-	TrainType      string              `json:"trainType"`
-	CommuterLineID string              `json:"commuterLineID"`
-	Version        int                 `json:"version"`
-	TimeTableRows  []TimeTableRowModel `json:"timeTableRows"`
-	Cancelled      bool                `json:"cancelled"`
+	TrainNumber      int                 `json:"trainNumber"`
+	TrainType        string              `json:"trainType"`
+	CommuterLineID   string              `json:"commuterLineID"`
+	Version          int                 `json:"version"`
+	TimeTableRows    []TimeTableRowModel `json:"timeTableRows"`
+	Cancelled        bool                `json:"cancelled"`
+	RunningCurrently bool                `json:"runningCurrently"`
 }
 
 // a generic wrapper implementing request to train api
@@ -154,4 +155,47 @@ func (t TrainModel) getType() string {
 func (t TrainModel) getFinalDestination() string {
 	lastDestination := t.TimeTableRows[len(t.TimeTableRows)-1]
 	return lastDestination.getStationName()
+}
+
+func (t TrainModel) hasDeparted() bool {
+	// get the first timetable row (it should only have DEPARTURE item)
+	ttr := t.TimeTableRows[0]
+
+	// if the train has actula departing time added, then the train has left
+	return ttr.ActualTime != ""
+}
+
+func (t TrainModel) getDelayInMinutes() int {
+	var lastTtr TimeTableRowModel
+
+	// check every timetable row
+	for index, ttr := range t.TimeTableRows {
+		if ttr.isStopping() {
+			// when finding the first station that the train hasn't stopped yet, check delay from previous station
+			if !ttr.hasStopped() && index != 0 {
+				return lastTtr.DifferenceInMinutes
+			}
+
+			// save reference
+			lastTtr = ttr
+		}
+	}
+
+	// default to zero
+	return 0
+}
+
+func (t TrainModel) getNextStop() TimeTableRowModel {
+	// check every timetable row
+	for _, ttr := range t.TimeTableRows {
+		if ttr.isStopping() {
+			// when finding the first station that the train hasn't stopped yet, check delay from previous station
+			if !ttr.hasStopped() {
+				return ttr
+			}
+		}
+	}
+
+	// default to first actual stop
+	return t.TimeTableRows[1]
 }
