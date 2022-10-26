@@ -2,15 +2,22 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"strconv"
 	"time"
 )
 
 func watch(trainNumber int) {
 	// start by fetching the train info
-	train := getTrain(trainNumber)
-	fmt.Printf("Watching: %s\n", train.getHeader())
+	train, err := getTrain(trainNumber)
 
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Watching: %s\n", train.getHeader())
 	for {
 		// first, cancellation check
 		if train.isCancelled() {
@@ -39,7 +46,13 @@ func watch(trainNumber int) {
 		}
 
 		// update train info and sleep before next iteration
-		train = getTrain(trainNumber)
+		train, err = getTrain(trainNumber)
+		if err != nil {
+			log.Fatal(err)
+			os.Exit(1)
+		}
+
+		// pause execution for 15 sec
 		time.Sleep(15 * time.Second)
 	}
 }

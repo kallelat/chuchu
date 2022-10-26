@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -12,16 +13,23 @@ func main() {
 	allTrainsAttribute := flag.Bool("all", false, "lists all trains currently available, usage: -all")
 	watchTrainsAttribute := flag.Int("watch", 0, "watch a certain train and let user know if there are changes, usage: -watch <trainNumber>")
 	stationAttribute := flag.String("station", "", "list trains today by station, usage -station <stationShortCode>")
+	serverAttribute := flag.Bool("server", false, "starts a server user can use to poll train schedules")
 
 	flag.Parse()
 
-	if *watchTrainsAttribute != 0 {
+	if *serverAttribute {
+		serve()
+	} else if *watchTrainsAttribute != 0 {
 		watch(*watchTrainsAttribute)
 		os.Exit(1)
-	}
+	} else if *trainNumberAttribute != 0 {
+		train, err := getTrain(*trainNumberAttribute)
+		if err != nil {
+			log.Fatal(err)
+			os.Exit(1)
+		}
 
-	if *trainNumberAttribute != 0 {
-		train := getTrain(*trainNumberAttribute)
+		// print train header
 		train.printHeader()
 
 		// if cancelled, print status and exit
@@ -32,17 +40,27 @@ func main() {
 
 		// if not cancelled, print train timetablerows
 		train.printTimeTableRows()
-	}
+	} else if *allTrainsAttribute {
+		trains, err := getAllTrains()
 
-	if *allTrainsAttribute {
-		trains := getAllTrains()
+		if err != nil {
+			log.Fatal(err)
+			os.Exit(1)
+		}
+
+		// print all train headers
 		for _, train := range trains {
 			train.printHeader()
 		}
-	}
+	} else if *stationAttribute != "" {
+		trains, err := getTrainsByStation(*stationAttribute)
 
-	if *stationAttribute != "" {
-		trains := getTrainsByStation(*stationAttribute)
+		if err != nil {
+			log.Fatal(err)
+			os.Exit(1)
+		}
+
+		// print schedule for each train stopping in the station
 		for _, train := range trains {
 			train.printScheduleEntry(*stationAttribute)
 		}

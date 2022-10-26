@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"sort"
 	"strconv"
 )
@@ -23,21 +22,19 @@ type TrainModel struct {
 }
 
 // a generic wrapper implementing request to train api
-func trainApi(path string, logfile string) []TrainModel {
+func trainApi(path string, logfile string) ([]TrainModel, error) {
 	url := fmt.Sprintf("%s/%s", apiUrl, path)
 	res, getError := http.Get(url)
 
 	// if fetching fails...
 	if getError != nil {
-		fmt.Println("Request " + path + " failed.")
-		os.Exit(1)
+		return nil, getError
 	}
 
 	// read all the data sent to byte array and handle error case
 	body, readError := io.ReadAll(res.Body)
 	if readError != nil {
-		fmt.Println("Failed to receive proper data from " + path)
-		os.Exit(1)
+		return nil, readError
 	}
 
 	// write to file
@@ -47,33 +44,42 @@ func trainApi(path string, logfile string) []TrainModel {
 	var trains []TrainModel
 	jsonError := json.Unmarshal(body, &trains)
 	if jsonError != nil {
-		fmt.Println("Could not parse " + path + " response")
-		os.Exit(1)
+		return nil, jsonError
 	}
-	return trains
+	return trains, nil
 }
 
 // fetch a single train info
-func getTrain(trainNumber int) TrainModel {
+func getTrain(trainNumber int) (*TrainModel, error) {
 	trainNumberAsString := strconv.Itoa(trainNumber)
 	path := fmt.Sprintf("%s/%s/%s", "trains", getTimestamp(), trainNumberAsString)
 	logfile := fmt.Sprintf("%s.json", trainNumberAsString)
-	trains := trainApi(path, logfile)
-	return trains[0]
+	trains, err := trainApi(path, logfile)
+	if err != nil {
+		return nil, err
+	}
+	return &trains[0], nil
 }
 
 // fetch list of all trains (today)
-func getAllTrains() []TrainModel {
+func getAllTrains() ([]TrainModel, error) {
 	path := fmt.Sprintf("%s/%s", "trains", getTimestamp())
-	trains := trainApi(path, "all.json")
-	return trains
+	trains, err := trainApi(path, "all.json")
+	if err != nil {
+		return nil, err
+	}
+	return trains, nil
 }
 
 // get all trains stopping station (today, not yet stopped)
-func getTrainsByStation(stationShortCode string) []TrainModel {
+func getTrainsByStation(stationShortCode string) ([]TrainModel, error) {
 	path := fmt.Sprintf("live-trains/station/%s?include_nonstopping=false&departing_trains=10", stationShortCode)
 	logfile := fmt.Sprintf("%s.json", stationShortCode)
-	trains := trainApi(path, logfile)
+	trains, err := trainApi(path, logfile)
+
+	if err != nil {
+		return nil, err
+	}
 
 	// sort by ScheduledTime
 	sort.SliceStable(trains, func(a, b int) bool {
@@ -88,7 +94,7 @@ func getTrainsByStation(stationShortCode string) []TrainModel {
 
 		return timeA.Before(timeB)
 	})
-	return trains
+	return trains, nil
 }
 
 func (t TrainModel) printTimeTableRows() {
