@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -57,6 +58,10 @@ func getTrain(trainNumber int) (*TrainModel, error) {
 	trains, err := trainApi(path, logfile)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(trains) == 0 {
+		return nil, errors.New("NoTrainsFound")
 	}
 	return &trains[0], nil
 }
