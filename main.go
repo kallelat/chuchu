@@ -12,6 +12,7 @@ func main() {
 	trainNumberAttribute := flag.Int("train", 0, "train number as integer, usage: -train <trainNumber>")
 	allTrainsAttribute := flag.Bool("all", false, "lists all trains currently available, usage: -all")
 	watchTrainsAttribute := flag.Int("watch", 0, "watch a certain train and let user know if there are changes, usage: -watch <trainNumber>")
+	stationsAttribute := flag.Bool("stations", false, "list all stations")
 	stationAttribute := flag.String("station", "", "list trains today by station, usage -station <stationShortCode>")
 	serverAttribute := flag.Bool("server", false, "starts a server user can use to poll train schedules")
 
@@ -60,10 +61,15 @@ func main() {
 			os.Exit(1)
 		}
 
-		// print schedule for each train stopping in the station
+		// print schedule for each train stopping in the stations
 		for _, train := range trains {
 			train.printScheduleEntry(*stationAttribute)
 		}
-	}
+	} else if *stationsAttribute {
+		stations := getStations()
 
+		for _, station := range stations {
+			station.print()
+		}
+	}
 }

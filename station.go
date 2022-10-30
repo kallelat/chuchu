@@ -63,3 +63,7 @@ func getStationByShortCode(stationShortCode string) StationModel {
 	}
 	return stations[0]
 }
+
+func (s StationModel) print() {
+	fmt.Printf("%s: %s\n", s.StationShortCode, s.StationName)
+}
