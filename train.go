@@ -102,24 +102,8 @@ func getTrainsByStation(stationShortCode string) ([]TrainModel, error) {
 	return trains, nil
 }
 
-func (t TrainModel) printTimeTableRows() {
-	for index, ttr := range t.TimeTableRows {
-		if ttr.isStopping() {
-			// print departing rows, except the final destination will be printed as well
-			isFinalDestionation := ttr.isArrival() && index == len(t.TimeTableRows)-1
-			if ttr.isDeparture() || isFinalDestionation {
-				ttr.print()
-			}
-		}
-	}
-}
-
 func (t TrainModel) isCancelled() bool {
 	return t.Cancelled
-}
-
-func (t TrainModel) printHeader() {
-	fmt.Printf("%s\n", t.getHeader())
 }
 
 func (t TrainModel) getStationEntry(stationShortCode string) TimeTableRowModel {
@@ -132,7 +116,7 @@ func (t TrainModel) getStationEntry(stationShortCode string) TimeTableRowModel {
 	return t.TimeTableRows[0]
 }
 
-func (t TrainModel) printScheduleEntry(stationShortCode string) {
+func (t TrainModel) toScheduleEntry(stationShortCode string) string {
 	// get station entry
 	ttr := t.getStationEntry(stationShortCode)
 
@@ -146,10 +130,10 @@ func (t TrainModel) printScheduleEntry(stationShortCode string) {
 	}
 
 	// print it all
-	fmt.Printf("%s to %s %s %s\n", t.getHeader(), t.getFinalDestination(), estimatedDeparture, departureTime)
+	return fmt.Sprintf("%s to %s %s %s", t.toString(), t.getFinalDestination(), estimatedDeparture, departureTime)
 }
 
-func (t TrainModel) getHeader() string {
+func (t TrainModel) toString() string {
 	return fmt.Sprintf("%s Train %s", t.getType(), t.getNumber())
 }
 func (t TrainModel) getNumber() string {

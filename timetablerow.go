@@ -15,7 +15,7 @@ type TimeTableRowModel struct {
 	TrainStopping       bool   `json:"trainStopping"`
 }
 
-func (ttr TimeTableRowModel) print() {
+func (ttr TimeTableRowModel) toString() string {
 	// get scheduled time as string
 	scheduledTime := parseToTime(ttr.ScheduledTime).Format("15:04")
 
@@ -34,7 +34,29 @@ func (ttr TimeTableRowModel) print() {
 	}
 
 	// print
-	fmt.Println(output)
+	return output
+}
+
+func (ttr TimeTableRowModel) toHTMLString() string {
+	// get scheduled time as string
+	scheduledTime := parseToTime(ttr.ScheduledTime).Format("15:04")
+
+	// define some wording based on is the train yet stopped
+	arrivedOrEstimated := "estimated arrival at"
+	if ttr.hasStopped() {
+		arrivedOrEstimated = "arrived at"
+	}
+
+	// main output
+	output := fmt.Sprintf(" => %s [%s], %s %s", ttr.getStationName(), ttr.StationShortCode, arrivedOrEstimated, scheduledTime)
+
+	// if delayed, add notification
+	if ttr.DifferenceInMinutes > 0 {
+		output += fmt.Sprintf(" (delayed +%s minutes)", strconv.Itoa(ttr.DifferenceInMinutes))
+	}
+
+	// print
+	return output
 }
 
 func (ttr TimeTableRowModel) getStationName() string {

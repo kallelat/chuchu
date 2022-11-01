@@ -17,7 +17,7 @@ func watch(trainNumber int) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Watching: %s\n", train.getHeader())
+	fmt.Printf("Watching: %s\n", train.toString())
 	for {
 		// first, cancellation check
 		if train.isCancelled() {

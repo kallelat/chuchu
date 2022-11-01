@@ -31,7 +31,7 @@ func main() {
 		}
 
 		// print train header
-		train.printHeader()
+		fmt.Println(train.toString())
 
 		// if cancelled, print status and exit
 		if train.isCancelled() {
@@ -40,7 +40,15 @@ func main() {
 		}
 
 		// if not cancelled, print train timetablerows
-		train.printTimeTableRows()
+		for index, ttr := range train.TimeTableRows {
+			if ttr.isStopping() {
+				// print departing rows, except the final destination will be printed as well
+				isFinalDestionation := ttr.isArrival() && index == len(train.TimeTableRows)-1
+				if ttr.isDeparture() || isFinalDestionation {
+					fmt.Println(ttr.toString())
+				}
+			}
+		}
 	} else if *allTrainsAttribute {
 		trains, err := getAllTrains()
 
@@ -51,7 +59,7 @@ func main() {
 
 		// print all train headers
 		for _, train := range trains {
-			train.printHeader()
+			fmt.Println(train.toString())
 		}
 	} else if *stationAttribute != "" {
 		trains, err := getTrainsByStation(*stationAttribute)
@@ -63,13 +71,14 @@ func main() {
 
 		// print schedule for each train stopping in the stations
 		for _, train := range trains {
-			train.printScheduleEntry(*stationAttribute)
+			str := train.toScheduleEntry(*stationAttribute)
+			fmt.Println(str)
 		}
 	} else if *stationsAttribute {
 		stations := getStations()
 
 		for _, station := range stations {
-			station.print()
+			fmt.Println(station.toString())
 		}
 	}
 }
