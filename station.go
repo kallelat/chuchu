@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -54,14 +55,14 @@ func getStations() []StationModel {
 	return stations
 }
 
-func getStationByShortCode(stationShortCode string) StationModel {
+func getStationByShortCode(stationShortCode string) (*StationModel, error) {
 	stations := getStations()
 	for _, station := range stations {
 		if station.StationShortCode == stationShortCode {
-			return station
+			return &station, nil
 		}
 	}
-	return stations[0]
+	return nil, errors.New("NoStationFound")
 }
 
 func (s StationModel) toString() string {

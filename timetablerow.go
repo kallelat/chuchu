@@ -60,7 +60,7 @@ func (ttr TimeTableRowModel) toHTMLString() string {
 }
 
 func (ttr TimeTableRowModel) getStationName() string {
-	station := getStationByShortCode(ttr.StationShortCode)
+	station, _ := getStationByShortCode(ttr.StationShortCode)
 	return station.StationName
 }
 
