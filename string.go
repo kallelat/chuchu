@@ -12,6 +12,7 @@ const (
 func color(color string, text string) string {
 	return fmt.Sprintf("%s%s\033[0m", color, text)
 }
+
 func red(text string) string {
 	return color(RED, text)
 }

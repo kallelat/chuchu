@@ -1,6 +1,11 @@
 # chuchu
 
-A simple Go app to poll train statuses. Supports CLI version and a lightweight HTTP server.
+A simple Go app to poll statuses and timetables of trains operating in Finnish railroad system.
+
+It uses public API's from https://www.digitraffic.fi/rautatieliikenne/ as source.
+
+The app supports CLI version and a lightweight HTTP server.
+
 
 ## CLI
 
